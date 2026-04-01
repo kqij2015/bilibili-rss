@@ -14,7 +14,7 @@ import os
 import sys
 
 UID = os.environ.get("BILIBILI_UID", "24919812")
-DAYS = int(os.environ.get("RSS_DAYS", "3"))
+MAX_VIDEOS = int(os.environ.get("RSS_MAX_VIDEOS", "10"))
 OUTPUT_FILE = "docs/rss.xml"
 
 MIXIN_KEY_ENC_TAB = [
@@ -38,7 +38,7 @@ def enc_wbi(params: dict, img_key: str, sub_key: str) -> dict:
     params["w_rid"] = hashlib.md5((query + mixin_key).encode()).hexdigest()
     return params
 
-def fetch_videos(uid: str, days: int) -> list:
+def fetch_videos(uid: str, max_videos: int) -> list:
     session = requests.Session()
     session.headers.update({
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -59,7 +59,6 @@ def fetch_videos(uid: str, days: int) -> list:
     img_key = img_url.rsplit("/", 1)[1].split(".")[0]
     sub_key = sub_url.rsplit("/", 1)[1].split(".")[0]
     
-    cutoff = datetime.now() - timedelta(days=days)
     all_videos = []
     pn = 1
     
@@ -85,12 +84,8 @@ def fetch_videos(uid: str, days: int) -> list:
         if not vlist:
             break
         
-        has_new = False
         for v in vlist:
             pub_dt = datetime.fromtimestamp(v.get("created", 0))
-            if pub_dt < cutoff:
-                break
-            has_new = True
             all_videos.append({
                 "title": v["title"],
                 "author": v.get("author", ""),
@@ -99,8 +94,10 @@ def fetch_videos(uid: str, days: int) -> list:
                 "desc": v.get("description", ""),
                 "pubdate": pub_dt,
             })
+            if len(all_videos) >= max_videos:
+                break
         
-        if not has_new:
+        if len(all_videos) >= max_videos:
             break
         
         total = data["data"]["page"].get("count", 0)
@@ -113,13 +110,13 @@ def fetch_videos(uid: str, days: int) -> list:
 def xml_escape(s: str) -> str:
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
-def build_rss(videos: list, uid: str, days: int) -> str:
+def build_rss(videos: list, uid: str, max_videos: int) -> str:
     lines = ['<?xml version="1.0" encoding="UTF-8"?>']
     lines.append('<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">')
     lines.append("  <channel>")
     lines.append(f"    <title>Bilibili UP {uid} 视频更新</title>")
     lines.append(f"    <link>https://space.bilibili.com/{uid}/video</link>")
-    lines.append(f"    <description>B站UP主 {uid} 近{days}天视频更新</description>")
+    lines.append(f"    <description>B站UP主 {uid} 最近{max_videos}条视频更新</description>")
     lines.append(f"    <language>zh-CN</language>")
     lines.append(f"    <lastBuildDate>{datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S +0000')}</lastBuildDate>")
     lines.append(f'    <atom:link href="https://{os.environ.get("GITHUB_REPOSITORY", "user/repo").split("/")[0]}.github.io/bilibili-rss/rss.xml" rel="self" type="application/rss+xml"/>')
@@ -146,14 +143,14 @@ def build_rss(videos: list, uid: str, days: int) -> str:
     return "\n".join(lines)
 
 def main():
-    print(f"获取 UP主 {UID} 近 {DAYS} 天的视频...")
-    videos = fetch_videos(UID, DAYS)
+    print(f"获取 UP主 {UID} 最近 {MAX_VIDEOS} 条视频...")
+    videos = fetch_videos(UID, MAX_VIDEOS)
     print(f"获取到 {len(videos)} 个视频")
 
     for v in videos:
         print(f"  - {v['title']} ({v['pubdate'].strftime('%Y-%m-%d %H:%M')})")
 
-    rss_xml = build_rss(videos, UID, DAYS)
+    rss_xml = build_rss(videos, UID, MAX_VIDEOS)
 
     os.makedirs("docs", exist_ok=True)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:

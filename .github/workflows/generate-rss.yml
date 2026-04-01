@@ -9,10 +9,10 @@ on:
         description: 'Bilibili UP主 UID'
         required: true
         default: '24919812'
-      days:
-        description: '获取最近几天的视频'
+      max_videos:
+        description: '获取最近多少条视频'
         required: false
-        default: '7'
+        default: '10'
 
 permissions:
   contents: write
@@ -37,7 +37,7 @@ jobs:
       - name: Generate RSS
         env:
           BILIBILI_UID: ${{ github.event.inputs.uid || '24919812' }}
-          RSS_DAYS: ${{ github.event.inputs.days || '7' }}
+          RSS_MAX_VIDEOS: ${{ github.event.inputs.max_videos || '10' }}
         run: python bilibili_rss.py
 
       - name: Deploy to GitHub Pages
