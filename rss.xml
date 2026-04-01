@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>Bilibili UP 24919812 视频更新</title>
+    <link>https://space.bilibili.com/24919812/video</link>
+    <description>B站UP主 24919812 近3天视频更新</description>
+    <language>zh-CN</language>
+    <lastBuildDate>Wed, 01 Apr 2026 15:19:23 +0000</lastBuildDate>
+    <atom:link href="https://kqij2015.github.io/bilibili-rss/rss.xml" rel="self" type="application/rss+xml"/>
+  </channel>
+</rss>
