@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: '0 */6 * * *'
   workflow_dispatch:
+    inputs:
+      uid:
+        description: 'Bilibili UP主 UID'
+        required: true
+        default: '24919812'
+      days:
+        description: '获取最近几天的视频'
+        required: false
+        default: '7'
 
 permissions:
   contents: write
@@ -26,6 +35,9 @@ jobs:
         run: pip install requests
 
       - name: Generate RSS
+        env:
+          BILIBILI_UID: ${{ github.event.inputs.uid || '24919812' }}
+          RSS_DAYS: ${{ github.event.inputs.days || '7' }}
         run: python bilibili_rss.py
 
       - name: Deploy to GitHub Pages
